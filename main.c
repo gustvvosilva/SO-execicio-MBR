@@ -1,63 +1,80 @@
 #include <stdio.h>
 #include <string.h>
 
+char *tipos(__uint8_t id) {
+    switch (id)
+    {
+    case 0x0b:
+        return "W95 FAT32";
+    case 0x83:
+        return "Linux";
+    default:
+        return "not found";
+    }
+}
+
 int main() {
 
     FILE *file = fopen("mbr.bin", "rb");
     __uint8_t bytes[512];
 
-    // printf("%d", sizeof(bytes)); > 512
-
     fread(bytes, 1, 512, file);
-
-    for(int i = 0; i < 512; i++) {
-
-        if (i % 2 == 0)
-            printf(" ");
-        if (i % 16 == 0)
-            printf("\n");
-
-        // if (bytes[i] == '\000')
-        //     printf("00");
-        // else
-            printf("%2x", bytes[i]);
-    }
-    printf("\n");
-
-    __uint32_t combinado1 = ((long)bytes[461] << 24) + ((long)bytes[460] << 16) + ((long)bytes[459] << 8) + ((long)bytes[458]);
-    __uint32_t combinado2 = ((long)bytes[477] << 24) + ((long)bytes[476] << 16) + ((long)bytes[475] << 8) + ((long)bytes[474]);
-
-    printf("%d - %d\n", combinado1, combinado2);
-
-    printf("/dev/sda%d   %ck\n",
-     1, 
-     bytes[446] == 128 ? '*' : '\0');
-
-    int device;
-    __uint32_t start, end, sectors;
-    double size;
-    __uint8_t id;
-    char bootable, type[10];
-    printf("\nDevice    Boot Start End Sectors Size Id Type\n");
-
-    for(int i = 0; i < 2; i++) {
-
-        device = i + 1;
-        bootable = bytes[446 + (16 * i)] == 128 ? '*' : 32;
-        start = ((long)bytes[457 + (16 * i)] << 24) + ((long)bytes[456 + (16 * i)] << 16) + ((long)bytes[455 + (16 * i)] << 8) + ((long)bytes[454 + (16 * i)]);
-        sectors = ((long)bytes[461 + (16 * i)] << 24) + ((long)bytes[460 + (16 * i)] << 16) + ((long)bytes[459 + (16 * i)] << 8) + ((long)bytes[458 + (16 * i)]);
-        end = start + sectors - 1;
-        size = (((sectors / 2.0) / 1024) / 1024);
-        id = bytes[450 + (16 * i)];
-
-        printf("/dev/sda%d %c    %7d %8d %8d %3.0lfG %2x\n", device, bootable, start, end, sectors, size, id);
-
-
-
-
-
-    }
-
     fclose(file);
+
+    // for(int i = 0; i < 512; i++) {
+
+    //     if (i % 2 == 0)
+    //         printf(" ");
+    //     if (i % 16 == 0)
+    //         printf("\n");
+
+    //     // if (bytes[i] == '\000')
+    //     //     printf("00");
+    //     // else
+    //         printf("%2x", bytes[i]);
+    // }
+    // printf("\n");
+
+    int device[4], qtd_particoes;
+    __uint32_t start[4], end[4], sectors[4], all_sectors = 0;
+    double size[4];
+    __uint8_t id[4];
+    char bootable[4];
+
+    for(int i = 0; i < 4; i++) {
+
+        start[i] = ((long)bytes[457 + (16 * i)] << 24) + ((long)bytes[456 + (16 * i)] << 16) + ((long)bytes[455 + (16 * i)] << 8) + ((long)bytes[454 + (16 * i)]);
+
+        if (start[i] == 0) {
+            qtd_particoes = i;
+            break;
+        }
+
+        device[i] = i + 1;
+        bootable[i] = bytes[446 + (16 * i)] == 128 ? '*' : 32;
+        sectors[i] = ((long)bytes[461 + (16 * i)] << 24) + ((long)bytes[460 + (16 * i)] << 16) + ((long)bytes[459 + (16 * i)] << 8) + ((long)bytes[458 + (16 * i)]);
+        end[i] = start[i] + sectors[i] - 1;
+        size[i] = (((sectors[i] / 2.0) / 1024) / 1024);
+        id[i] = bytes[450 + (16 * i)];
+
+        if (all_sectors == 0)
+            all_sectors = start[i] + sectors[i];
+        else
+            all_sectors += sectors[i];
+    }
+
+    __uint64_t all_bytes = ((__uint64_t)all_sectors * 512);
+    double all_size = (((all_sectors / 2.0) / 1024) / 1024);
+    __uint32_t signature = ((long)bytes[0x1bb] << 24) + ((long)bytes[0x1ba] << 16) + ((long)bytes[0x1b9] << 8) + ((long)bytes[0x1b8]);
+
+
+    printf("\nDisk /dev/sda: %.0lf GiB, %ld bytes, %d sectors\n", all_size, all_bytes, all_sectors);
+    printf("Disk identifier: 0x%x\n", signature);
+
+    printf("\nDevice     Boot   Start      End  Sectors Size Id Type\n");
+    for(int i = 0; i < qtd_particoes; i++) {
+        printf("/dev/sda%d  %c    %7d %8d %8d %3.0lfG %2x %s\n", device[i], bootable[i], start[i], end[i], sectors[i], size[i], id[i], tipos(id[i]));
+    }
+
     return 0;
 }
