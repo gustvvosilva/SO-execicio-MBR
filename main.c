@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 
 char *tipos(__uint8_t id) {
     switch (id)
@@ -21,17 +20,15 @@ int main() {
     fread(bytes, 1, 512, file);
     fclose(file);
 
+    // printf("\nHEXDUMP:");
     // for(int i = 0; i < 512; i++) {
 
     //     if (i % 2 == 0)
     //         printf(" ");
     //     if (i % 16 == 0)
-    //         printf("\n");
+    //         printf("\n%07x ", i);
 
-    //     // if (bytes[i] == '\000')
-    //     //     printf("00");
-    //     // else
-    //         printf("%2x", bytes[i]);
+    //     printf("%02x", bytes[i]);
     // }
     // printf("\n");
 
@@ -43,7 +40,7 @@ int main() {
 
     for(int i = 0; i < 4; i++) {
 
-        start[i] = ((long)bytes[457 + (16 * i)] << 24) + ((long)bytes[456 + (16 * i)] << 16) + ((long)bytes[455 + (16 * i)] << 8) + ((long)bytes[454 + (16 * i)]);
+        start[i] = (bytes[457 + (16 * i)] << 24) + (bytes[456 + (16 * i)] << 16) + (bytes[455 + (16 * i)] << 8) + (bytes[454 + (16 * i)]);
 
         if (start[i] == 0) {
             qtd_particoes = i;
@@ -52,7 +49,7 @@ int main() {
 
         device[i] = i + 1;
         bootable[i] = bytes[446 + (16 * i)] == 128 ? '*' : 32;
-        sectors[i] = ((long)bytes[461 + (16 * i)] << 24) + ((long)bytes[460 + (16 * i)] << 16) + ((long)bytes[459 + (16 * i)] << 8) + ((long)bytes[458 + (16 * i)]);
+        sectors[i] = (bytes[461 + (16 * i)] << 24) + (bytes[460 + (16 * i)] << 16) + (bytes[459 + (16 * i)] << 8) + (bytes[458 + (16 * i)]);
         end[i] = start[i] + sectors[i] - 1;
         size[i] = (((sectors[i] / 2.0) / 1024) / 1024);
         id[i] = bytes[450 + (16 * i)];
@@ -65,8 +62,7 @@ int main() {
 
     __uint64_t all_bytes = ((__uint64_t)all_sectors * 512);
     double all_size = (((all_sectors / 2.0) / 1024) / 1024);
-    __uint32_t signature = ((long)bytes[0x1bb] << 24) + ((long)bytes[0x1ba] << 16) + ((long)bytes[0x1b9] << 8) + ((long)bytes[0x1b8]);
-
+    __uint32_t signature = (bytes[0x1bb] << 24) + (bytes[0x1ba] << 16) + (bytes[0x1b9] << 8) + (bytes[0x1b8]);
 
     printf("\nDisk /dev/sda: %.0lf GiB, %ld bytes, %d sectors\n", all_size, all_bytes, all_sectors);
     printf("Disk identifier: 0x%x\n", signature);
