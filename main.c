@@ -21,9 +21,10 @@ int main() {
     // printf("\n");
 
     DEV device[MAX_DEVS];  // Faz um array de devices para receber os valores de cada um separado.
-    int qtd_particoes,     // Quantidade de partições encontradas na MBR. Serve pra quando for imprimi-las.
+    int qtd_particoes = 4, // Quantidade de partições encontradas na MBR. Serve pra quando for imprimi-las.
         pl;                // PL significa PULA LINHA, ou seja, toda vez que for feito uma iteração no laço
                            // de atribuição abaixo, ele vai pegar as informações da próxima partição.
+                           // O nome PL é baseado da visualização HEXDUMP, onde podemos ver cada partição em uma linha.
     __uint32_t all_sectors = 0;  // Soma todos os setores do disco.
 
     for(int i = 0; i < MAX_DEVS; i++) {
